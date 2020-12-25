@@ -12,7 +12,6 @@ namespace MySRP
         partial void PrepareBuffer();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        private static ShaderTagId s_unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
         private static ShaderTagId[] s_legacyShaderTagIds = {
         new ShaderTagId("Always"),
         new ShaderTagId("ForwardBase"),

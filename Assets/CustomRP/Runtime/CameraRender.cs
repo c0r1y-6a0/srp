@@ -5,6 +5,10 @@ namespace MySRP
 {
     public partial class CameraRender
     {
+        private static ShaderTagId 
+        s_unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit"),
+        litShaderTagId = new ShaderTagId("CustomLit");
+
         private ScriptableRenderContext m_context;
         private Camera m_camera;
 
@@ -61,6 +65,7 @@ namespace MySRP
                 enableDynamicBatching = m_batchMode == E_BatchingMode.DynamicBatching, 
                 enableInstancing = m_batchMode == E_BatchingMode.GPUInstancing
             };
+            drawSettings.SetShaderPassName(1, litShaderTagId);
 
             m_context.DrawRenderers(m_cullingResults, ref drawSettings, ref filterSettings);
 
