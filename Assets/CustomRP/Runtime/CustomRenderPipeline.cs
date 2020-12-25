@@ -1,14 +1,24 @@
 ﻿using UnityEngine;
 using UnityEngine.Rendering;
 
-public class CustomRenderPipeline : RenderPipeline
+namespace MySRP
 {
-    CameraRender camRender = new CameraRender();
-    protected override void Render(ScriptableRenderContext context, Camera[] cameras)
+    public class CustomRenderPipeline : RenderPipeline
     {
-        foreach(Camera cam in cameras)
+        CameraRender camRender;
+        public CustomRenderPipeline(E_BatchingMode mode)
         {
-            camRender.Render(context, cam);
+            GraphicsSettings.useScriptableRenderPipelineBatching = mode == E_BatchingMode.SRPBatcher;
+            camRender = new CameraRender(mode);
+        }
+
+        protected override void Render(ScriptableRenderContext context, Camera[] cameras)
+        {
+            foreach (Camera cam in cameras)
+            {
+                camRender.Render(context, cam);
+            }
         }
     }
+
 }

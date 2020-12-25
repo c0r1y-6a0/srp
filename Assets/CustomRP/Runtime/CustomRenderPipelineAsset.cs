@@ -1,11 +1,27 @@
 ﻿using UnityEngine;
 using UnityEngine.Rendering;
 
-[CreateAssetMenu(menuName ="Rendering/My Render Pipeline")]
-public class CustomRenderPipelineAsset : RenderPipelineAsset
+namespace MySRP
 {
-    protected override RenderPipeline CreatePipeline()
+    public enum E_BatchingMode
     {
-        return new CustomRenderPipeline();
+        None,
+        SRPBatcher,
+        GPUInstancing,
+        DynamicBatching,
     }
+
+    [CreateAssetMenu(menuName = "Rendering/My Render Pipeline")]
+    public class CustomRenderPipelineAsset : RenderPipelineAsset
+    {
+
+        [SerializeField]
+        public E_BatchingMode BatchMode;
+
+        protected override RenderPipeline CreatePipeline()
+        {
+            return new CustomRenderPipeline(BatchMode);
+        }
+    }
+
 }

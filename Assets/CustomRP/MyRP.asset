@@ -12,3 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d3c44c9539f2df4fbc8b24768046907, type: 3}
   m_Name: MyRP
   m_EditorClassIdentifier: 
+  BatchMode: 0
