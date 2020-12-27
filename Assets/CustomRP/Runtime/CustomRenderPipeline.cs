@@ -9,6 +9,7 @@ namespace MySRP
         public CustomRenderPipeline(E_BatchingMode mode)
         {
             GraphicsSettings.useScriptableRenderPipelineBatching = mode == E_BatchingMode.SRPBatcher;
+            GraphicsSettings.lightsUseLinearIntensity = true;
             camRender = new CameraRender(mode);
         }
 

@@ -19,6 +19,8 @@ namespace MySRP
 
         private E_BatchingMode m_batchMode;
 
+        private Lighting m_lighting = new Lighting();
+
         public CameraRender(E_BatchingMode batchMode)
         {
             m_batchMode = batchMode;
@@ -39,6 +41,7 @@ namespace MySRP
             }
 
             Setup();
+            m_lighting.Setup(context, m_cullingResults);
             DrawVisibleGeometry();
             DrawUnsupportedShaders();
             DrawGizmos();

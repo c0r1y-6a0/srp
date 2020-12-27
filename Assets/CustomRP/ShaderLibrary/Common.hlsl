@@ -1,7 +1,12 @@
 #ifndef CUSTOM_RP_COMMON
 #define CUSTOM_RP_COMMON
 
+float Square(float v){
+    return v * v;
+}
+
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
 #include "UnityInput.hlsl"
 
 #define UNITY_MATRIX_M unity_ObjectToWorld
