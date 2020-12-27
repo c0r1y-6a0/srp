@@ -13,14 +13,16 @@ namespace MySRP
         [SerializeField]
         Material material = default;
 
-        Matrix4x4[] matrices = new Matrix4x4[1023];
-        Vector4[] baseColors = new Vector4[1023];
+        const int c_BallCount = 1023;
+
+        Matrix4x4[] matrices = new Matrix4x4[c_BallCount];
+        Vector4[] baseColors = new Vector4[c_BallCount];
 
         MaterialPropertyBlock block;
 
         void Awake()
         {
-            for (int i = 0; i < matrices.Length; i++)
+            for (int i = 0; i < c_BallCount; i++)
             {
                 matrices[i] = Matrix4x4.TRS(Random.insideUnitSphere * 10f, Quaternion.identity, Vector3.one);
                 baseColors[i] = new Vector4(Random.value, Random.value, Random.value, 1f);
@@ -34,8 +36,14 @@ namespace MySRP
                 block = new MaterialPropertyBlock();
                 block.SetVectorArray(baseColorId, baseColors);
             }
-            Graphics.DrawMeshInstanced(mesh, 0, material, matrices, 1023, block);
-            Graphics.DrawMesh(mesh, Vector3.zero, Quaternion.Euler(0, 0, 0), material, 0, null, 0, null, false, false, false);
+            Graphics.DrawMeshInstanced(mesh, 0, material, matrices, c_BallCount, block);
+
+/*
+            for(int i = 0 ; i < c_BallCount; i++)
+            {
+                Graphics.DrawMesh(mesh, matrices[i], material, 0);
+            }
+            */
         }
     }
 
