@@ -18,11 +18,16 @@ namespace MySRP
         private CommandBuffer m_buffer = new CommandBuffer { name = c_BufferName };
         private CullingResults m_culling = new CullingResults();
 
-        public void Setup(ScriptableRenderContext context, CullingResults culling)
+        private Shadows m_shadows = new Shadows();
+
+        public void Setup(ScriptableRenderContext context, CullingResults culling, ShadowSettings settings)
         {
             m_culling = culling;
             m_buffer.BeginSample(c_BufferName);
+
+            m_shadows.Setup(context, culling, settings);
             SetupLights();
+            m_shadows.Render();
             m_buffer.EndSample(c_BufferName);
 
             context.ExecuteCommandBuffer(m_buffer);
@@ -33,6 +38,7 @@ namespace MySRP
         {
             s_dirLightColors[index] = visibleLight.finalColor;
             s_dirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
+            m_shadows.ReserveDirectionalShadow(visibleLight.light, index);
         }
         private void SetupLights()
         {
@@ -56,6 +62,11 @@ namespace MySRP
             m_buffer.SetGlobalInt(s_dirLightCountId, visibleLights.Length);
             m_buffer.SetGlobalVectorArray(s_dirLightColorsId, s_dirLightColors);
             m_buffer.SetGlobalVectorArray(s_dirLightDirectionsId, s_dirLightDirections);
+        }
+
+        public void CleanUp()
+        {
+            m_shadows.CleanUp();
         }
     }
 

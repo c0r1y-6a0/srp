@@ -6,14 +6,14 @@ namespace MySRP
     public partial class CameraRender
     {
         private static ShaderTagId 
-        s_unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit"),
-        litShaderTagId = new ShaderTagId("CustomLit");
+        s_UnlitShaderTagId = new ShaderTagId("SRPDefaultUnlit"),
+        s_LitShaderTagId = new ShaderTagId("CustomLit");
 
         private ScriptableRenderContext m_context;
         private Camera m_camera;
 
-        private const string BUFFERNAME = "Render Camera";
-        private CommandBuffer m_buffer = new CommandBuffer { name = BUFFERNAME };
+        private const string c_BufferName = "Render Camera";
+        private CommandBuffer m_buffer = new CommandBuffer { name = c_BufferName };
 
         private CullingResults m_cullingResults;
 
@@ -27,7 +27,7 @@ namespace MySRP
         }
 
 
-        public void Render(ScriptableRenderContext context, Camera camera)
+        public void Render(ScriptableRenderContext context, Camera camera, ShadowSettings shadowsSettings)
         {
             m_context = context;
             m_camera = camera;
@@ -35,27 +35,28 @@ namespace MySRP
             PrepareBuffer();
             PrepareSceneMesh();
 
-            if (!Cull())
+            if (!Cull(shadowsSettings.m_maxDistance))
             {
                 return;
             }
 
+            m_buffer.BeginSample(c_BufferName);
+            ExecuteBuffer();
+            m_lighting.Setup(context, m_cullingResults, shadowsSettings);
+            m_buffer.EndSample(c_BufferName);
             Setup();
-            m_lighting.Setup(context, m_cullingResults);
             DrawVisibleGeometry();
             DrawUnsupportedShaders();
             DrawGizmos();
+            m_lighting.CleanUp();
             Submit();
         }
 
         private void Setup()
         {
             m_context.SetupCameraProperties(m_camera);
-            m_buffer.ClearRenderTarget(
-                m_camera.clearFlags <= CameraClearFlags.Depth,
-                m_camera.clearFlags == CameraClearFlags.Color,
-                m_camera.clearFlags == CameraClearFlags.Color ? m_camera.backgroundColor.linear : Color.clear);
-            m_buffer.BeginSample(BUFFERNAME);
+            m_buffer.ClearRenderTarget( m_camera.clearFlags <= CameraClearFlags.Depth, m_camera.clearFlags == CameraClearFlags.Color, m_camera.clearFlags == CameraClearFlags.Color ? m_camera.backgroundColor.linear : Color.clear);
+            m_buffer.BeginSample(c_BufferName);
             ExecuteBuffer();
         }
 
@@ -63,12 +64,12 @@ namespace MySRP
         {
             var filterSettings = new FilteringSettings(RenderQueueRange.opaque);
             var sortingSettings = new SortingSettings(m_camera) { criteria = SortingCriteria.CommonOpaque };
-            var drawSettings = new DrawingSettings(s_unlitShaderTagId, sortingSettings) 
+            var drawSettings = new DrawingSettings(s_UnlitShaderTagId, sortingSettings) 
             { 
                 enableDynamicBatching = m_batchMode == E_BatchingMode.DynamicBatching, 
                 enableInstancing = m_batchMode == E_BatchingMode.GPUInstancing
             };
-            drawSettings.SetShaderPassName(1, litShaderTagId);
+            drawSettings.SetShaderPassName(1, s_LitShaderTagId);
 
             m_context.DrawRenderers(m_cullingResults, ref drawSettings, ref filterSettings);
 
@@ -82,7 +83,7 @@ namespace MySRP
 
         private void Submit()
         {
-            m_buffer.EndSample(BUFFERNAME);
+            m_buffer.EndSample(c_BufferName);
             ExecuteBuffer();
             m_context.Submit();
         }
@@ -93,10 +94,11 @@ namespace MySRP
             m_buffer.Clear();
         }
 
-        bool Cull()
+        bool Cull(float maxShadowDistance)
         {
             if (m_camera.TryGetCullingParameters(out ScriptableCullingParameters p))
             {
+                p.shadowDistance = Mathf.Min(maxShadowDistance, m_camera.farClipPlane);
                 m_cullingResults = m_context.Cull(ref p);
                 return true;
             }

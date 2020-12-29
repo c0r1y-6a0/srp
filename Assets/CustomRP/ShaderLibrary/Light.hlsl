@@ -2,6 +2,7 @@
 #define CUSTOM_RP_LIGHT 
 
 #define MAX_DIRECTIONAL_LIGHT_COUNT 4
+
 CBUFFER_START(_CustomLight)
     int _DirectionalLightCount;
 	float4 _DirectionalLightColors[MAX_DIRECTIONAL_LIGHT_COUNT];

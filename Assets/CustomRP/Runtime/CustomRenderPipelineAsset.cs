@@ -16,11 +16,13 @@ namespace MySRP
     {
 
         [SerializeField]
-        public E_BatchingMode BatchMode;
+        E_BatchingMode BatchMode;
+        [SerializeField]
+        ShadowSettings shadowSettings = default;
 
         protected override RenderPipeline CreatePipeline()
         {
-            return new CustomRenderPipeline(BatchMode);
+            return new CustomRenderPipeline(BatchMode, shadowSettings);
         }
     }
 
