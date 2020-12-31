@@ -13,3 +13,7 @@ MonoBehaviour:
   m_Name: MyRP
   m_EditorClassIdentifier: 
   BatchMode: 0
+  shadowSettings:
+    m_maxDistance: 10
+    Directional:
+      atlasSize: 1024
