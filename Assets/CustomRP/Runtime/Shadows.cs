@@ -40,32 +40,34 @@ namespace MySRP
             m_buffer.Clear();
         }
 
-        public void ReserveDirectionalShadow(Light light, int visibleLightIndex)
+        public Vector2 ReserveDirectionalShadow(Light light, int visibleLightIndex)
         {
             if(m_shadowedDirectionalLightCount < c_MaxShadowedDirectionalLightCount
                 && light.shadows != LightShadows.None && light.intensity > 0f
                 && m_cullingResult.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
             {
-                m_shadowedDirectionalLightInfo[m_shadowedDirectionalLightCount++] = new ShadowedDirectionalLight { VisibleLightIndex = visibleLightIndex };
+                m_shadowedDirectionalLightInfo[m_shadowedDirectionalLightCount] = new ShadowedDirectionalLight { VisibleLightIndex = visibleLightIndex };
+                return new Vector2(light.shadowStrength, m_shadowedDirectionalLightCount++);
             }
+            return Vector2.zero;
         }
 
         public void Render()
         {
             if(m_shadowedDirectionalLightCount > 0)
             {
-                RenderDirectionalShadow();
+                RenderDirectionalShadows();
             }
             else
             {
-                m_buffer.GetTemporaryRT(s_DirShadowAtlasId, 1, 1, 16, FilterMode.Bilinear, RenderTextureFormat.Shadowmap );
+                m_buffer.GetTemporaryRT(s_DirShadowAtlasId, 1, 1, 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap );
             }
         }
 
-        private void RenderDirectionalShadow()
+        private void RenderDirectionalShadows()
         {
             int atlasSize = (int)m_shadowSettings.Directional.atlasSize;
-            m_buffer.GetTemporaryRT(s_DirShadowAtlasId, atlasSize, atlasSize, 16, FilterMode.Bilinear, RenderTextureFormat.Shadowmap);
+            m_buffer.GetTemporaryRT(s_DirShadowAtlasId, atlasSize, atlasSize, 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap);
             m_buffer.SetRenderTarget(s_DirShadowAtlasId, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
             m_buffer.ClearRenderTarget(true, true, Color.clear);
             m_buffer.BeginSample(c_BufferName);
@@ -84,6 +86,33 @@ namespace MySRP
             ExecuteBuffer();
         }
 
+        Matrix4x4 ConvertToAtlasMatrix(Matrix4x4 m, Vector2 offset, int split)
+        {
+            if (SystemInfo.usesReversedZBuffer)
+            {
+                m.m20 = -m.m20;
+                m.m21 = -m.m21;
+                m.m22 = -m.m22;
+                m.m23 = -m.m23;
+            }
+
+            float scale = 1f / split;
+            m.m00 = (0.5f * (m.m00 + m.m30) + offset.x * m.m30) * scale;
+            m.m01 = (0.5f * (m.m01 + m.m31) + offset.x * m.m31) * scale;
+            m.m02 = (0.5f * (m.m02 + m.m32) + offset.x * m.m32) * scale;
+            m.m03 = (0.5f * (m.m03 + m.m33) + offset.x * m.m33) * scale;
+            m.m10 = (0.5f * (m.m10 + m.m30) + offset.y * m.m30) * scale;
+            m.m11 = (0.5f * (m.m11 + m.m31) + offset.y * m.m31) * scale;
+            m.m12 = (0.5f * (m.m12 + m.m32) + offset.y * m.m32) * scale;
+            m.m13 = (0.5f * (m.m13 + m.m33) + offset.y * m.m33) * scale;
+            m.m20 = 0.5f * (m.m20 + m.m30);
+            m.m21 = 0.5f * (m.m21 + m.m31);
+            m.m22 = 0.5f * (m.m22 + m.m32);
+            m.m23 = 0.5f * (m.m23 + m.m33);
+
+            return m;
+        }
+
         Vector2 SetViewPort(int index, int split, float tileSize)
         {
             Vector2 offset = new Vector2(index % split, index / split);
@@ -96,9 +125,10 @@ namespace MySRP
             var shadowdDirLightInfo = m_shadowedDirectionalLightInfo[index];
             var shadowSettings = new ShadowDrawingSettings(m_cullingResult,shadowdDirLightInfo.VisibleLightIndex);
 
-            m_cullingResult.ComputeDirectionalShadowMatricesAndCullingPrimitives(index, 0, 1, Vector3.zero, tileSize, 0f, out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData shadowSplitData);
+            m_cullingResult.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowdDirLightInfo.VisibleLightIndex, 0, 1, Vector3.zero, tileSize, 0f, 
+                out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData shadowSplitData);
             shadowSettings.splitData = shadowSplitData;
-            SetViewPort(index, split, tileSize);
+            s_DirShadowMatrices[index] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, SetViewPort(index, split, tileSize), split);
             m_buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
             ExecuteBuffer();
             m_context.DrawShadows(ref shadowSettings);

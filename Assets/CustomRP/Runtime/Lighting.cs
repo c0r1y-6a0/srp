@@ -11,9 +11,11 @@ namespace MySRP
         private static int s_dirLightCountId = Shader.PropertyToID("_DirectionalLightCount");
 		private static int s_dirLightColorsId = Shader.PropertyToID("_DirectionalLightColors");
 		private static int s_dirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections");
+        private static int s_dirLightShadowDataId = Shader.PropertyToID("_DirectionalLightShadowData");
 
         private static Vector4[] s_dirLightColors = new Vector4[c_maxDirectinonalLightCount];
 		private static Vector4[] s_dirLightDirections = new Vector4[c_maxDirectinonalLightCount];
+        private static Vector4[] s_dirLightShadowData = new Vector4[c_maxDirectinonalLightCount];
 
         private CommandBuffer m_buffer = new CommandBuffer { name = c_BufferName };
         private CullingResults m_culling = new CullingResults();
@@ -38,7 +40,7 @@ namespace MySRP
         {
             s_dirLightColors[index] = visibleLight.finalColor;
             s_dirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
-            m_shadows.ReserveDirectionalShadow(visibleLight.light, index);
+            s_dirLightShadowData[index] = m_shadows.ReserveDirectionalShadow(visibleLight.light, index);
         }
         private void SetupLights()
         {
@@ -62,6 +64,7 @@ namespace MySRP
             m_buffer.SetGlobalInt(s_dirLightCountId, visibleLights.Length);
             m_buffer.SetGlobalVectorArray(s_dirLightColorsId, s_dirLightColors);
             m_buffer.SetGlobalVectorArray(s_dirLightDirectionsId, s_dirLightDirections);
+            m_buffer.SetGlobalVectorArray(s_dirLightShadowDataId, s_dirLightShadowData);
         }
 
         public void CleanUp()

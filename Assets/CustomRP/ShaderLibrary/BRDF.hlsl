@@ -1,5 +1,5 @@
-#ifndef CUSTOM_RP_BRDF
-#define CUSTOM_RP_BRDF 
+#ifndef CUSTOM_RP_BRDF_INCLUDED
+#define CUSTOM_RP_BRDF_INCLUDED
 
 struct BRDF{
     float3 diffuse;

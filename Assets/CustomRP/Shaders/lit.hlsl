@@ -3,6 +3,7 @@
 
 #include "../ShaderLibrary/Common.hlsl"
 #include "../ShaderLibrary/Surface.hlsl"
+#include "../ShaderLibrary/Shadow.hlsl"
 #include "../ShaderLibrary/Light.hlsl"
 #include "../ShaderLibrary/BRDF.hlsl"
 #include "../ShaderLibrary/Lighting.hlsl"
@@ -63,6 +64,7 @@ float4 lit_frag(Varings input) : SV_TARGET
 	clip(base.a - UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Cutoff));
 #endif
 	Surface surface;
+	surface.positionWS = input.positionWS;
 	surface.normal = normalize(input.normal);
 	surface.color = base.rgb;
 	surface.alpha = base.a;

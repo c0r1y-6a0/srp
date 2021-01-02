@@ -1,5 +1,5 @@
-#ifndef CUSTOM_RP_COMMON
-#define CUSTOM_RP_COMMON
+#ifndef CUSTOM_RP_COMMON_INCLUDED
+#define CUSTOM_RP_COMMON_INCLUDED
 
 float Square(float v){
     return v * v;
