@@ -11,11 +11,16 @@ namespace MySRP
         }
 
         const int c_MaxShadowedDirectionalLightCount = 4;
+        const int c_MaxCascades = 4;
         const string c_BufferName = "Shadows";
 
         static int s_DirShadowAtlasId = Shader.PropertyToID("_DirectionalShadowAtlas");
         static int s_DirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices");
-        static Matrix4x4[] s_DirShadowMatrices = new Matrix4x4[c_MaxShadowedDirectionalLightCount];
+        static Matrix4x4[] s_DirShadowMatrices = new Matrix4x4[c_MaxShadowedDirectionalLightCount * c_MaxCascades];
+        static int s_CascadeCountId = Shader.PropertyToID("_CascadeCount");
+		static int s_CascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres");
+        static Vector4[] s_CascadeCullingSpheres = new Vector4[c_MaxCascades];
+
 
         CommandBuffer m_buffer = new CommandBuffer { name = c_BufferName };
         ScriptableRenderContext m_context;
@@ -47,7 +52,7 @@ namespace MySRP
                 && m_cullingResult.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
             {
                 m_shadowedDirectionalLightInfo[m_shadowedDirectionalLightCount] = new ShadowedDirectionalLight { VisibleLightIndex = visibleLightIndex };
-                return new Vector2(light.shadowStrength, m_shadowedDirectionalLightCount++);
+                return new Vector2(light.shadowStrength, m_shadowSettings.Directional.cascadeCount * m_shadowedDirectionalLightCount++);
             }
             return Vector2.zero;
         }
@@ -73,13 +78,17 @@ namespace MySRP
             m_buffer.BeginSample(c_BufferName);
             ExecuteBuffer();
 
-            int split = m_shadowedDirectionalLightCount <= 1 ? 1 : 2;
+            int tiles = m_shadowedDirectionalLightCount * m_shadowSettings.Directional.cascadeCount;
+            int split = tiles <= 1 ? 1 : tiles <= 4 ? 2 : 4;
             int tileSize = atlasSize / split;
 
             for(int i = 0; i < m_shadowedDirectionalLightCount; i++)
             {
                 RenderDirectionalShadow(i, split, tileSize);
             }
+
+            m_buffer.SetGlobalInt(s_CascadeCountId, m_shadowSettings.Directional.cascadeCount);
+            m_buffer.SetGlobalVectorArray(s_CascadeCullingSpheresId, s_CascadeCullingSpheres);
 
             m_buffer.SetGlobalMatrixArray(s_DirShadowMatricesId, s_DirShadowMatrices);
             m_buffer.EndSample(c_BufferName);
@@ -125,13 +134,27 @@ namespace MySRP
             var shadowdDirLightInfo = m_shadowedDirectionalLightInfo[index];
             var shadowSettings = new ShadowDrawingSettings(m_cullingResult,shadowdDirLightInfo.VisibleLightIndex);
 
-            m_cullingResult.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowdDirLightInfo.VisibleLightIndex, 0, 1, Vector3.zero, tileSize, 0f, 
-                out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData shadowSplitData);
-            shadowSettings.splitData = shadowSplitData;
-            s_DirShadowMatrices[index] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, SetViewPort(index, split, tileSize), split);
-            m_buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
-            ExecuteBuffer();
-            m_context.DrawShadows(ref shadowSettings);
+            int cascadeCount = m_shadowSettings.Directional.cascadeCount;
+            int tileOffset = index * cascadeCount;
+            Vector3 ratios = m_shadowSettings.Directional.CascadeRatio;
+
+            for(int i = 0 ; i < cascadeCount ; i++)
+            {
+                m_cullingResult.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowdDirLightInfo.VisibleLightIndex, i, cascadeCount, ratios, tileSize, 0f,
+                    out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData shadowSplitData);
+                shadowSettings.splitData = shadowSplitData;
+                if(index == 0) // TODO:这里不能移到循环外面吗？
+                {
+                    Vector4 cullingSphere = shadowSplitData.cullingSphere;
+                    cullingSphere.w *= cullingSphere.w;
+                    s_CascadeCullingSpheres[i] = cullingSphere;
+                }
+                int tileIndex = tileOffset + i;
+                s_DirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, SetViewPort(tileIndex, split, tileSize), split);
+                m_buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
+                ExecuteBuffer();
+                m_context.DrawShadows(ref shadowSettings);
+            }
         }
 
         public void CleanUp()
