@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   BatchMode: 0
   shadowSettings:
-    m_maxDistance: 8.34
+    MaxDistance: 10
     Directional:
       atlasSize: 1024
       cascadeCount: 4

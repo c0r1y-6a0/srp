@@ -9,6 +9,7 @@ TEXTURE2D_SHADOW(_DirectionalShadowAtlas);
 SAMPLER_CMP(SHADOW_SAMPLER);
 
 CBUFFER_START(_CustomShadows)
+    float _ShadowDistance;
     int _CascadeCount;
     float4 _CascadeCullingSpheres[MAX_CASCADE_COUNT];
     float4x4 _DirectionalShadowMatrices[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT * MAX_CASCADE_COUNT];
@@ -33,12 +34,12 @@ ShadowData GetShadowData(Surface surface){
             break;
         }
     }
-    data.strength = i == _CascadeCount ? 0.0 : 1.0;
+    data.strength = i == _CascadeCount ? 0.0 : surface.depth < _ShadowDistance ? 1.0 : 0.0;
     data.cascadeIndex = i;
     return data;
 }
 
-float SampleDirectionalShadowAtlas(float3 positionSTS){//不是特别理解此处
+float SampleDirectionalShadowAtlas(float3 positionSTS){//为什么是个float3而不是uv
     return SAMPLE_TEXTURE2D_SHADOW(_DirectionalShadowAtlas, SHADOW_SAMPLER, positionSTS);
 }
 

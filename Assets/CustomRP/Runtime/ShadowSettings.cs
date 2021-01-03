@@ -6,7 +6,7 @@ namespace MySRP
     public class ShadowSettings
     {
         [Min(0f)]
-        public float m_maxDistance = 100f;
+        public float MaxDistance = 100f;
 
         public enum TextureSize
         {

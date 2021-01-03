@@ -7,6 +7,7 @@ struct Surface
     float3 normal;
     float3 viewDirection; // in wordl space 
     float3 color;
+    float depth;
     float alpha;
     float metallic;
 	float smoothness;

@@ -35,7 +35,7 @@ namespace MySRP
             PrepareBuffer();
             PrepareSceneMesh();
 
-            if (!Cull(shadowsSettings.m_maxDistance))
+            if (!Cull(shadowsSettings.MaxDistance))
             {
                 return;
             }

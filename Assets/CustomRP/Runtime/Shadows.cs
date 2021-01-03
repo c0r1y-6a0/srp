@@ -19,6 +19,7 @@ namespace MySRP
         static Matrix4x4[] s_DirShadowMatrices = new Matrix4x4[c_MaxShadowedDirectionalLightCount * c_MaxCascades];
         static int s_CascadeCountId = Shader.PropertyToID("_CascadeCount");
 		static int s_CascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres");
+        static int s_shadowDistanceId = Shader.PropertyToID("_ShadowDistance");
         static Vector4[] s_CascadeCullingSpheres = new Vector4[c_MaxCascades];
 
 
@@ -88,8 +89,8 @@ namespace MySRP
             }
 
             m_buffer.SetGlobalInt(s_CascadeCountId, m_shadowSettings.Directional.cascadeCount);
+            m_buffer.SetGlobalFloat(s_shadowDistanceId, m_shadowSettings.MaxDistance);
             m_buffer.SetGlobalVectorArray(s_CascadeCullingSpheresId, s_CascadeCullingSpheres);
-
             m_buffer.SetGlobalMatrixArray(s_DirShadowMatricesId, s_DirShadowMatrices);
             m_buffer.EndSample(c_BufferName);
             ExecuteBuffer();

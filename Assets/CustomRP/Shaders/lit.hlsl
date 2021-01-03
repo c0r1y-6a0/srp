@@ -71,6 +71,7 @@ float4 lit_frag(Varings input) : SV_TARGET
 	surface.metallic = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic);
 	surface.smoothness = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
 	surface.viewDirection = normalize(_WorldSpaceCameraPos - input.positionWS);
+	surface.depth = -TransformWorldToView(input.positionWS).z;
 
 #if defined(_PREMULTIPLIED_ALPHA)
 	BRDF brdf =  GetBRDF(surface, true);
