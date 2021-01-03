@@ -14,10 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   BatchMode: 0
   shadowSettings:
-    MaxDistance: 10
+    MaxDistance: 30
+    DistanceFade: 0.1
+    SimpleBias: 0
+    SlopeBasedBias: 0
     Directional:
-      atlasSize: 1024
+      atlasSize: 512
       cascadeCount: 4
       cascade1Ratio: 0.1
       cascade2Ratio: 0.25
       cascade3Ratio: 0.5
+      cascadeFade: 0.1

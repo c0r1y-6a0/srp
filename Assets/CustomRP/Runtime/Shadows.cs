@@ -19,8 +19,10 @@ namespace MySRP
         static Matrix4x4[] s_DirShadowMatrices = new Matrix4x4[c_MaxShadowedDirectionalLightCount * c_MaxCascades];
         static int s_CascadeCountId = Shader.PropertyToID("_CascadeCount");
 		static int s_CascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres");
+        static int s_CascadeDataId = Shader.PropertyToID("_CascadeData");
         static int s_ShadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
         static Vector4[] s_CascadeCullingSpheres = new Vector4[c_MaxCascades];
+        static Vector4[] s_CascadeData = new Vector4[c_MaxCascades];
 
 
         CommandBuffer m_buffer = new CommandBuffer { name = c_BufferName };
@@ -92,6 +94,7 @@ namespace MySRP
             float f = 1f - m_shadowSettings.Directional.cascadeFade;
             m_buffer.SetGlobalVector(s_ShadowDistanceFadeId, new Vector4(1 / m_shadowSettings.MaxDistance, 1 / m_shadowSettings.DistanceFade, 1f / (1f - f*f)));
             m_buffer.SetGlobalVectorArray(s_CascadeCullingSpheresId, s_CascadeCullingSpheres);
+            m_buffer.SetGlobalVectorArray(s_CascadeDataId, s_CascadeData);
             m_buffer.SetGlobalMatrixArray(s_DirShadowMatricesId, s_DirShadowMatrices);
             m_buffer.EndSample(c_BufferName);
             ExecuteBuffer();
@@ -147,16 +150,24 @@ namespace MySRP
                 shadowSettings.splitData = shadowSplitData;
                 if(index == 0) // TODO:这里不能移到循环外面吗？
                 {
-                    Vector4 cullingSphere = shadowSplitData.cullingSphere;
-                    cullingSphere.w *= cullingSphere.w;
-                    s_CascadeCullingSpheres[i] = cullingSphere;
+                    SetCascadeData(i, shadowSplitData.cullingSphere, tileSize);
                 }
                 int tileIndex = tileOffset + i;
                 s_DirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, SetViewPort(tileIndex, split, tileSize), split);
                 m_buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
+                m_buffer.SetGlobalDepthBias(m_shadowSettings.SimpleBias, m_shadowSettings.SlopeBasedBias);
                 ExecuteBuffer();
                 m_context.DrawShadows(ref shadowSettings);
+                m_buffer.SetGlobalDepthBias(0f, 0f);
             }
+        }
+
+        void SetCascadeData(int index, Vector4 cullingSphere, float tileSize)
+        {
+            float texelSize = 2f * cullingSphere.w / tileSize;
+            s_CascadeData[index] = new Vector4(1f / cullingSphere.w, texelSize * 1.4142136f);
+            cullingSphere.w *= cullingSphere.w;
+            s_CascadeCullingSpheres[index] = cullingSphere;
         }
 
         public void CleanUp()
