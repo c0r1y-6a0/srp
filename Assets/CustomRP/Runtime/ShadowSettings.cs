@@ -29,29 +29,37 @@ namespace MySRP
         [System.Serializable]
         public struct DirectionalInfo
         {
-            public TextureSize atlasSize;
+            public TextureSize AtlasSize;
             public FilterMode Filter;
 
             [Range(1, 4)]
-            public int cascadeCount;
+            public int CascadeCount;
 
             [Range(0f, 1f)]
-            public float cascade1Ratio, cascade2Ratio, cascade3Ratio;
+            public float Cascade1Ratio;
+            public float Cascade2Ratio;
+            public float Cascade3Ratio;
 
-            public Vector3 CascadeRatio => new Vector3(cascade1Ratio, cascade2Ratio, cascade3Ratio);
+            public Vector3 CascadeRatio => new Vector3(Cascade1Ratio, Cascade2Ratio, Cascade3Ratio);
 
             [Range(0.01f, 1f)]
-            public float cascadeFade;
+            public float CascadeFade;
+            public enum CascadeBlendMode
+            {
+                Hard, Soft, Dither
+            }
+            public CascadeBlendMode CascadeBlend;
         }
 
         public DirectionalInfo Directional = new DirectionalInfo { 
-            atlasSize = TextureSize._1024 ,
+            AtlasSize = TextureSize._1024 ,
             Filter = FilterMode.PCF2x2,
-            cascadeCount = 4,
-            cascade1Ratio = 0.1f,
-            cascade2Ratio = 0.25f,
-            cascade3Ratio = 0.5f,
-            cascadeFade = 0.1f
+            CascadeCount = 4,
+            Cascade1Ratio = 0.1f,
+            Cascade2Ratio = 0.25f,
+            Cascade3Ratio = 0.5f,
+            CascadeFade = 0.1f,
+            CascadeBlend = DirectionalInfo.CascadeBlendMode.Hard
         };
 
     }

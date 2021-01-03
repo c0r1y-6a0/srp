@@ -31,6 +31,7 @@ namespace MySRP
         static Vector4[] s_CascadeData = new Vector4[c_MaxCascades];
 
         static string[] s_DirectionalFilterKeywords = { "_DIRECTIONAL_PCF3", "_DIRECTIONAL_PCF5", "_DIRECTIONAL_PCF7", };
+        static string[] s_CascadeBlendKeywords = { "_CASCADE_BLEND_SOFT", "_CASCADE_BLEND_DITHER" };
 
 
         CommandBuffer m_buffer = new CommandBuffer { name = c_BufferName };
@@ -63,7 +64,7 @@ namespace MySRP
                 && m_cullingResult.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
             {
                 m_shadowedDirectionalLightInfo[m_shadowedDirectionalLightCount] = new ShadowedDirectionalLight { VisibleLightIndex = visibleLightIndex , SlopeScaleBias = light.shadowBias, NearPlaneOffset = light.shadowNearPlane};
-                return new Vector3(light.shadowStrength, m_shadowSettings.Directional.cascadeCount * m_shadowedDirectionalLightCount++, light.shadowNormalBias);
+                return new Vector3(light.shadowStrength, m_shadowSettings.Directional.CascadeCount * m_shadowedDirectionalLightCount++, light.shadowNormalBias);
             }
             return Vector3.zero;
         }
@@ -82,14 +83,14 @@ namespace MySRP
 
         private void RenderDirectionalShadows()
         {
-            int atlasSize = (int)m_shadowSettings.Directional.atlasSize;
+            int atlasSize = (int)m_shadowSettings.Directional.AtlasSize;
             m_buffer.GetTemporaryRT(s_DirShadowAtlasId, atlasSize, atlasSize, 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap);
             m_buffer.SetRenderTarget(s_DirShadowAtlasId, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
             m_buffer.ClearRenderTarget(true, true, Color.clear);
             m_buffer.BeginSample(c_BufferName);
             ExecuteBuffer();
 
-            int tiles = m_shadowedDirectionalLightCount * m_shadowSettings.Directional.cascadeCount;
+            int tiles = m_shadowedDirectionalLightCount * m_shadowSettings.Directional.CascadeCount;
             int split = tiles <= 1 ? 1 : tiles <= 4 ? 2 : 4;
             int tileSize = atlasSize / split;
 
@@ -98,13 +99,14 @@ namespace MySRP
                 RenderDirectionalShadow(i, split, tileSize);
             }
 
-            m_buffer.SetGlobalInt(s_CascadeCountId, m_shadowSettings.Directional.cascadeCount);
-            float f = 1f - m_shadowSettings.Directional.cascadeFade;
+            m_buffer.SetGlobalInt(s_CascadeCountId, m_shadowSettings.Directional.CascadeCount);
+            float f = 1f - m_shadowSettings.Directional.CascadeFade;
             m_buffer.SetGlobalVector(s_ShadowDistanceFadeId, new Vector4(1 / m_shadowSettings.MaxDistance, 1 / m_shadowSettings.DistanceFade, 1f / (1f - f*f)));
             m_buffer.SetGlobalVectorArray(s_CascadeCullingSpheresId, s_CascadeCullingSpheres);
             m_buffer.SetGlobalVectorArray(s_CascadeDataId, s_CascadeData);
             m_buffer.SetGlobalMatrixArray(s_DirShadowMatricesId, s_DirShadowMatrices);
-            SetKeywords();
+            SetKeywords(s_DirectionalFilterKeywords, (int)m_shadowSettings.Directional.Filter - 1);
+            SetKeywords(s_CascadeBlendKeywords, (int)m_shadowSettings.Directional.CascadeBlend - 1);
             m_buffer.SetGlobalVector(s_ShadowAtlasSizeId, new Vector4(atlasSize, 1f/atlasSize));
             m_buffer.EndSample(c_BufferName);
             ExecuteBuffer();
@@ -149,7 +151,7 @@ namespace MySRP
             var shadowdDirLightInfo = m_shadowedDirectionalLightInfo[index];
             var shadowSettings = new ShadowDrawingSettings(m_cullingResult,shadowdDirLightInfo.VisibleLightIndex);
 
-            int cascadeCount = m_shadowSettings.Directional.cascadeCount;
+            int cascadeCount = m_shadowSettings.Directional.CascadeCount;
             int tileOffset = index * cascadeCount;
             Vector3 ratios = m_shadowSettings.Directional.CascadeRatio;
 
@@ -189,18 +191,17 @@ namespace MySRP
             ExecuteBuffer();
         }
 
-        void SetKeywords()
+        void SetKeywords(string[] keywords, int enabledIndex)
         {
-            int enabledIndex = (int)m_shadowSettings.Directional.Filter- 1;
-            for (int i = 0; i < s_DirectionalFilterKeywords.Length; i++)
+            for (int i = 0; i < keywords.Length; i++)
             {
                 if (i == enabledIndex)
                 {
-                    m_buffer.EnableShaderKeyword(s_DirectionalFilterKeywords[i]);
+                    m_buffer.EnableShaderKeyword(keywords[i]);
                 }
                 else
                 {
-                    m_buffer.DisableShaderKeyword(s_DirectionalFilterKeywords[i]);
+                    m_buffer.DisableShaderKeyword(keywords[i]);
                 }
             }
         }

@@ -38,6 +38,7 @@ struct DirectionalShadowData{
 
 struct ShadowData{
     int cascadeIndex;
+    float cascadeBlend;
     float strength;
 };
 
@@ -47,18 +48,34 @@ float FadedShadowStrength(float distance, float scale, float fade){
 
 ShadowData GetShadowData(Surface surface){
     ShadowData data;
+    data.cascadeBlend = 1.0;
     data.strength = FadedShadowStrength(surface.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y);
     int i;
     for( i = 0 ; i < _CascadeCount ; i++){
         float4 sphere = _CascadeCullingSpheres[i];
         float distanceSqr = DistanceSquared(surface.positionWS, sphere.xyz);
         if(distanceSqr < sphere.w){
+            float fade = FadedShadowStrength(distanceSqr, _CascadeData[i].x, _ShadowDistanceFade.z);
             if(i == _CascadeCount - 1){
-                data.strength *= FadedShadowStrength(distanceSqr, _CascadeData[i].x, _ShadowDistanceFade.z);
+                data.strength *= fade;
+            }
+            else{
+                data.cascadeBlend = fade;
             }
             break;
         }
     }
+    if (i == _CascadeCount) {
+		data.strength = 0.0;
+	}
+	#if defined(_CASCADE_BLEND_DITHER)
+		else if (data.cascadeBlend < surface.dither) {
+			i += 1;
+		}
+	#endif
+	#if !defined(_CASCADE_BLEND_SOFT)
+		data.cascadeBlend = 1.0;
+	#endif
     data.cascadeIndex = i;
     return data;
 }
@@ -93,6 +110,11 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
     float3 normalBias = surface.normal * directional.normalBias * _CascadeData[global.cascadeIndex].y;
     float3 positionSTS = mul(_DirectionalShadowMatrices[directional.tileIndex], float4(surface.positionWS + normalBias, 1.0)).xyz;
     float shadow = FilterDirectionalShadow(positionSTS);
+    if (global.cascadeBlend < 1.0) {
+		normalBias = surface.normal * (directional.normalBias * _CascadeData[global.cascadeIndex + 1].y);
+		positionSTS = mul( _DirectionalShadowMatrices[directional.tileIndex + 1], float4(surface.positionWS + normalBias, 1.0)).xyz;
+		shadow = lerp( FilterDirectionalShadow(positionSTS), shadow, global.cascadeBlend);
+	}
     return lerp(1.0, shadow, directional.strength);
 }
 
