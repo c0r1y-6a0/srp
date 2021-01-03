@@ -9,7 +9,7 @@ TEXTURE2D_SHADOW(_DirectionalShadowAtlas);
 SAMPLER_CMP(SHADOW_SAMPLER);
 
 CBUFFER_START(_CustomShadows)
-    float _ShadowDistance;
+    float4 _ShadowDistanceFade;
     int _CascadeCount;
     float4 _CascadeCullingSpheres[MAX_CASCADE_COUNT];
     float4x4 _DirectionalShadowMatrices[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT * MAX_CASCADE_COUNT];
@@ -25,6 +25,10 @@ struct ShadowData{
     float strength;
 };
 
+float FadedShadowStrength(float distance, float scale, float fade){
+    return saturate((1 - distance * scale) * fade);
+}
+
 ShadowData GetShadowData(Surface surface){
     ShadowData data;
     int i;
@@ -34,7 +38,7 @@ ShadowData GetShadowData(Surface surface){
             break;
         }
     }
-    data.strength = i == _CascadeCount ? 0.0 : surface.depth < _ShadowDistance ? 1.0 : 0.0;
+    data.strength = FadedShadowStrength(surface.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y);
     data.cascadeIndex = i;
     return data;
 }

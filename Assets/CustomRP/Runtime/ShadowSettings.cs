@@ -5,8 +5,11 @@ namespace MySRP
     [System.Serializable]
     public class ShadowSettings
     {
-        [Min(0f)]
+        [Min(0.01f)]
         public float MaxDistance = 100f;
+
+        [Range(0.01f, 1f)]
+        public float DistanceFade = 0.1f;
 
         public enum TextureSize
         {
