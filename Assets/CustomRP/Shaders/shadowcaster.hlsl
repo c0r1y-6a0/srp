@@ -38,6 +38,12 @@ Varings shadow_caster_vert(app_data input)
 	UNITY_TRANSFER_INSTANCE_ID(input, output);
 	float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
 	output.positionCS = TransformWorldToHClip(positionWS);
+#if UNITY_REVERSED_Z
+	output.positionCS.z = min(output.positionCS.z, output.positionCS.w * UNITY_NEAR_CLIP_VALUE);
+#else
+	output.positionCS.z = max(output.positionCS.z, output.positionCS.w * UNITY_NEAR_CLIP_VALUE);
+#endif
+
 	float4 baseST = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_ST);
 	output.baseUV = input.baseUV * baseST.xy + baseST.zw;
 

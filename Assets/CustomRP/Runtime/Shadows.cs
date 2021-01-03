@@ -8,6 +8,9 @@ namespace MySRP
         struct ShadowedDirectionalLight
         {
             public int VisibleLightIndex;
+            public float SlopeScaleBias;
+
+            public float NearPlaneOffset;
         }
 
         const int c_MaxShadowedDirectionalLightCount = 4;
@@ -48,16 +51,16 @@ namespace MySRP
             m_buffer.Clear();
         }
 
-        public Vector2 ReserveDirectionalShadow(Light light, int visibleLightIndex)
+        public Vector3 ReserveDirectionalShadow(Light light, int visibleLightIndex)
         {
             if(m_shadowedDirectionalLightCount < c_MaxShadowedDirectionalLightCount
                 && light.shadows != LightShadows.None && light.intensity > 0f
                 && m_cullingResult.GetShadowCasterBounds(visibleLightIndex, out Bounds b))
             {
-                m_shadowedDirectionalLightInfo[m_shadowedDirectionalLightCount] = new ShadowedDirectionalLight { VisibleLightIndex = visibleLightIndex };
-                return new Vector2(light.shadowStrength, m_shadowSettings.Directional.cascadeCount * m_shadowedDirectionalLightCount++);
+                m_shadowedDirectionalLightInfo[m_shadowedDirectionalLightCount] = new ShadowedDirectionalLight { VisibleLightIndex = visibleLightIndex , SlopeScaleBias = light.shadowBias, NearPlaneOffset = light.shadowNearPlane};
+                return new Vector3(light.shadowStrength, m_shadowSettings.Directional.cascadeCount * m_shadowedDirectionalLightCount++, light.shadowNormalBias);
             }
-            return Vector2.zero;
+            return Vector3.zero;
         }
 
         public void Render()
@@ -145,7 +148,8 @@ namespace MySRP
 
             for(int i = 0 ; i < cascadeCount ; i++)
             {
-                m_cullingResult.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowdDirLightInfo.VisibleLightIndex, i, cascadeCount, ratios, tileSize, 0f,
+                m_cullingResult.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowdDirLightInfo.VisibleLightIndex, i, cascadeCount,
+                    ratios, tileSize, shadowdDirLightInfo.NearPlaneOffset,
                     out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData shadowSplitData);
                 shadowSettings.splitData = shadowSplitData;
                 if(index == 0) // TODO:这里不能移到循环外面吗？
@@ -155,7 +159,7 @@ namespace MySRP
                 int tileIndex = tileOffset + i;
                 s_DirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, SetViewPort(tileIndex, split, tileSize), split);
                 m_buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
-                m_buffer.SetGlobalDepthBias(m_shadowSettings.SimpleBias, m_shadowSettings.SlopeBasedBias);
+                m_buffer.SetGlobalDepthBias(0, shadowdDirLightInfo.SlopeScaleBias);
                 ExecuteBuffer();
                 m_context.DrawShadows(ref shadowSettings);
                 m_buffer.SetGlobalDepthBias(0f, 0f);

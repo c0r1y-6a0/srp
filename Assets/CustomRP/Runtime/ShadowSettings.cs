@@ -11,9 +11,6 @@ namespace MySRP
         [Range(0.01f, 1f)]
         public float DistanceFade = 0.1f;
 
-        public float SimpleBias = 500000f;
-        public float SlopeBasedBias = 3f;
-
         public enum TextureSize
         {
             _256 = 256,
