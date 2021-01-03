@@ -89,7 +89,8 @@ namespace MySRP
             }
 
             m_buffer.SetGlobalInt(s_CascadeCountId, m_shadowSettings.Directional.cascadeCount);
-            m_buffer.SetGlobalVector(s_ShadowDistanceFadeId, new Vector4(1 / m_shadowSettings.MaxDistance, 1 / m_shadowSettings.DistanceFade));
+            float f = 1f - m_shadowSettings.Directional.cascadeFade;
+            m_buffer.SetGlobalVector(s_ShadowDistanceFadeId, new Vector4(1 / m_shadowSettings.MaxDistance, 1 / m_shadowSettings.DistanceFade, 1f / (1f - f*f)));
             m_buffer.SetGlobalVectorArray(s_CascadeCullingSpheresId, s_CascadeCullingSpheres);
             m_buffer.SetGlobalMatrixArray(s_DirShadowMatricesId, s_DirShadowMatrices);
             m_buffer.EndSample(c_BufferName);

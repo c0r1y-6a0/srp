@@ -33,6 +33,9 @@ namespace MySRP
             public float cascade1Ratio, cascade2Ratio, cascade3Ratio;
 
             public Vector3 CascadeRatio => new Vector3(cascade1Ratio, cascade2Ratio, cascade3Ratio);
+
+            [Range(0.01f, 1f)]
+            public float cascadeFade;
         }
 
         public DirectionalInfo Directional = new DirectionalInfo { 
@@ -40,8 +43,9 @@ namespace MySRP
             cascadeCount = 4,
             cascade1Ratio = 0.1f,
             cascade2Ratio = 0.25f,
-            cascade3Ratio = 0.5f
-            };
+            cascade3Ratio = 0.5f,
+            cascadeFade = 0.1f
+        };
 
     }
 

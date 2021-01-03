@@ -31,14 +31,18 @@ float FadedShadowStrength(float distance, float scale, float fade){
 
 ShadowData GetShadowData(Surface surface){
     ShadowData data;
+    data.strength = FadedShadowStrength(surface.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y);
     int i;
     for( i = 0 ; i < _CascadeCount ; i++){
         float4 sphere = _CascadeCullingSpheres[i];
-        if(DistanceSquared(surface.positionWS, sphere.xyz) < sphere.w){
+        float distanceSqr = DistanceSquared(surface.positionWS, sphere.xyz);
+        if(distanceSqr < sphere.w){
+            if(i == _CascadeCount - 1){
+                data.strength *= FadedShadowStrength(distanceSqr, 1 / sphere.w, _ShadowDistanceFade.z);
+            }
             break;
         }
     }
-    data.strength = FadedShadowStrength(surface.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y);
     data.cascadeIndex = i;
     return data;
 }
