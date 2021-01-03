@@ -155,11 +155,14 @@ namespace MySRP
             int tileOffset = index * cascadeCount;
             Vector3 ratios = m_shadowSettings.Directional.CascadeRatio;
 
+            float cullingFactor = Mathf.Max(0f, 0.8f - m_shadowSettings.Directional.CascadeFade);
+
             for(int i = 0 ; i < cascadeCount ; i++)
             {
                 m_cullingResult.ComputeDirectionalShadowMatricesAndCullingPrimitives(shadowdDirLightInfo.VisibleLightIndex, i, cascadeCount,
                     ratios, tileSize, shadowdDirLightInfo.NearPlaneOffset,
                     out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData shadowSplitData);
+                shadowSplitData.shadowCascadeBlendCullingFactor = cullingFactor;
                 shadowSettings.splitData = shadowSplitData;
                 if(index == 0) // TODO:这里不能移到循环外面吗？
                 {
