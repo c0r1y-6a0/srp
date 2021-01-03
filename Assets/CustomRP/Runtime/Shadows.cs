@@ -19,13 +19,18 @@ namespace MySRP
 
         static int s_DirShadowAtlasId = Shader.PropertyToID("_DirectionalShadowAtlas");
         static int s_DirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices");
-        static Matrix4x4[] s_DirShadowMatrices = new Matrix4x4[c_MaxShadowedDirectionalLightCount * c_MaxCascades];
         static int s_CascadeCountId = Shader.PropertyToID("_CascadeCount");
 		static int s_CascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres");
         static int s_CascadeDataId = Shader.PropertyToID("_CascadeData");
         static int s_ShadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
+        static int s_ShadowAtlasSizeId = Shader.PropertyToID("_ShadowAtlasSize");
+
+
+        static Matrix4x4[] s_DirShadowMatrices = new Matrix4x4[c_MaxShadowedDirectionalLightCount * c_MaxCascades];
         static Vector4[] s_CascadeCullingSpheres = new Vector4[c_MaxCascades];
         static Vector4[] s_CascadeData = new Vector4[c_MaxCascades];
+
+        static string[] s_DirectionalFilterKeywords = { "_DIRECTIONAL_PCF3", "_DIRECTIONAL_PCF5", "_DIRECTIONAL_PCF7", };
 
 
         CommandBuffer m_buffer = new CommandBuffer { name = c_BufferName };
@@ -99,6 +104,8 @@ namespace MySRP
             m_buffer.SetGlobalVectorArray(s_CascadeCullingSpheresId, s_CascadeCullingSpheres);
             m_buffer.SetGlobalVectorArray(s_CascadeDataId, s_CascadeData);
             m_buffer.SetGlobalMatrixArray(s_DirShadowMatricesId, s_DirShadowMatrices);
+            SetKeywords();
+            m_buffer.SetGlobalVector(s_ShadowAtlasSizeId, new Vector4(atlasSize, 1f/atlasSize));
             m_buffer.EndSample(c_BufferName);
             ExecuteBuffer();
         }
@@ -169,7 +176,9 @@ namespace MySRP
         void SetCascadeData(int index, Vector4 cullingSphere, float tileSize)
         {
             float texelSize = 2f * cullingSphere.w / tileSize;
-            s_CascadeData[index] = new Vector4(1f / cullingSphere.w, texelSize * 1.4142136f);
+            float filterSize = texelSize * ((float)m_shadowSettings.Directional.Filter + 1f);
+            s_CascadeData[index] = new Vector4(1f / cullingSphere.w, texelSize * filterSize * 1.4142136f);
+            cullingSphere.w -= filterSize;
             cullingSphere.w *= cullingSphere.w;
             s_CascadeCullingSpheres[index] = cullingSphere;
         }
@@ -178,6 +187,22 @@ namespace MySRP
         {
             m_buffer.ReleaseTemporaryRT(s_DirShadowAtlasId);
             ExecuteBuffer();
+        }
+
+        void SetKeywords()
+        {
+            int enabledIndex = (int)m_shadowSettings.Directional.Filter- 1;
+            for (int i = 0; i < s_DirectionalFilterKeywords.Length; i++)
+            {
+                if (i == enabledIndex)
+                {
+                    m_buffer.EnableShaderKeyword(s_DirectionalFilterKeywords[i]);
+                }
+                else
+                {
+                    m_buffer.DisableShaderKeyword(s_DirectionalFilterKeywords[i]);
+                }
+            }
         }
     }
 

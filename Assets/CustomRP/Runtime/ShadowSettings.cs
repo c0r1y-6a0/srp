@@ -11,6 +11,11 @@ namespace MySRP
         [Range(0.01f, 1f)]
         public float DistanceFade = 0.1f;
 
+        public enum FilterMode
+        {
+            PCF2x2, PCF3x3, PCF5x5, PCF7x7
+        }
+
         public enum TextureSize
         {
             _256 = 256,
@@ -25,6 +30,7 @@ namespace MySRP
         public struct DirectionalInfo
         {
             public TextureSize atlasSize;
+            public FilterMode Filter;
 
             [Range(1, 4)]
             public int cascadeCount;
@@ -40,6 +46,7 @@ namespace MySRP
 
         public DirectionalInfo Directional = new DirectionalInfo { 
             atlasSize = TextureSize._1024 ,
+            Filter = FilterMode.PCF2x2,
             cascadeCount = 4,
             cascade1Ratio = 0.1f,
             cascade2Ratio = 0.25f,
