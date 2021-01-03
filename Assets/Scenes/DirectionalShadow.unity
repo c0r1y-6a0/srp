@@ -1268,9 +1268,9 @@ Light:
     m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
-    m_Strength: 0.507
-    m_Bias: 0
-    m_NormalBias: 1.04
+    m_Strength: 0.476
+    m_Bias: 1.1
+    m_NormalBias: 1.28
     m_NearPlane: 0.2
     m_CullingMatrixOverride:
       e00: 1

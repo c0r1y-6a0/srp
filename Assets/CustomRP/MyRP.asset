@@ -15,11 +15,10 @@ MonoBehaviour:
   BatchMode: 0
   shadowSettings:
     MaxDistance: 30
-    DistanceFade: 0.1
-    SimpleBias: 0
-    SlopeBasedBias: 0
+    DistanceFade: 0.108
     Directional:
       atlasSize: 512
+      Filter: 2
       cascadeCount: 4
       cascade1Ratio: 0.1
       cascade2Ratio: 0.25
