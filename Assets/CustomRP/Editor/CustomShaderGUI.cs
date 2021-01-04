@@ -89,7 +89,7 @@ public class CustomShaderGUI : ShaderGUI
     {
         if(SetProperty(name, value ? 1.0f:0.0f))
         {
-            SetKeyword(name, value);
+            SetKeyword(keyword, value);
         }
     }
 
