@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: srp-unlit
   m_Shader: {fileID: 4800000, guid: 6e0cb4555343e7d4589a99da32923db4, type: 3}
-  m_ShaderKeywords: 
+  m_ShaderKeywords: _Clipping
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
